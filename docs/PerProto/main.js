@@ -1,9 +1,10 @@
 // The title of the game to be displayed on the title screen
-title = "CHARGE RUSH";
+title = "MONARCHS ODYSSEY";
 
 // The description, which is also displayed on the title screen
 description = `
 Destroy enemies.
+Gain powers.
 `;
 
 // The array of custom sprites
@@ -36,12 +37,16 @@ llllll
  llll
   ll
 `,`
-    ll
-    ll
-  ccllcc
-  ccllcc
-ccccllcccc
-cccc  cccc
+gg  gg
+gg  gg
+gggggg
+gggggg
+gggggg
+  gg
+  gg
+`,`
+gg
+gg
 `
 ];
 
@@ -66,6 +71,7 @@ const G = {
     ENEMY_FIRE_RATE: 45,
 
     EBULLET_SPEED: 2.0,
+    EBULLET_SPEED1: 1,
     EBULLET_ROTATION_SPD: 0.1
 };
 
@@ -152,9 +158,34 @@ let enemies;
  */
 
 /**
+ * @typedef {{
+* pos: Vector,
+* firingCooldown: number
+* }} Enemy1
+*/
+
+/**
+* @type { Enemy [] }
+*/
+let enemies1;
+
+/**
+* @typedef {{
+* pos: Vector,
+* angle: number,
+* rotation: number
+* }} EBullet1
+*/
+
+/**
  * @type { EBullet [] }
  */
 let eBullets;
+
+/**
+ * @type { EBullet1 [] }
+ */
+let eBullets1;
 
 /**
  * @type { number }
@@ -209,18 +240,35 @@ function update() {
         fBullets = [];
         fPowerUp = [];
         enemies = [];
+        enemies1 = [];
         eBullets = [];
+        eBullets1 = [];
         waveCount = 0;
 	}
 
     // Spawning enemies
-    if (enemies.length === 0) {
+    if (enemies.length === 0 && waveCount > 5) {
         currentEnemySpeed =
             rnd(G.ENEMY_MIN_BASE_SPEED, G.ENEMY_MAX_BASE_SPEED) * difficulty;
         for (let i = 0; i < 5; i++) {
             const posX = rnd(0, G.WIDTH);
             const posY = -rnd(i * G.HEIGHT * 0.1);
             enemies.push({
+                pos: vec(posX, posY),
+                firingCooldown: G.ENEMY_FIRE_RATE 
+            });
+        }
+        //waveCount++; // Increase the tracking variable by one
+    }
+
+    // Spawning enemies
+    if (enemies1.length === 0) {
+        currentEnemySpeed =
+            rnd(G.ENEMY_MIN_BASE_SPEED, G.ENEMY_MAX_BASE_SPEED) * difficulty;
+        for (let i = 0; i < 5; i++) {
+            const posX = rnd(0, G.WIDTH);
+            const posY = -rnd(i * G.HEIGHT * 0.1);
+            enemies1.push({
                 pos: vec(posX, posY),
                 firingCooldown: G.ENEMY_FIRE_RATE 
             });
@@ -239,7 +287,6 @@ function update() {
                 pos: vec(posX, posY),
             });
         }
-    
         //waveCount++; // Increase the tracking variable by one
     }
 
@@ -392,6 +439,46 @@ function update() {
         return (isCollidingWithFBullets || e.pos.y > G.HEIGHT);
     });
 
+    remove(enemies1, (e) => {
+        e.pos.y += currentEnemySpeed;
+        e.firingCooldown--;
+        if (e.firingCooldown <= 0) {
+            eBullets1.push({
+                pos: vec(e.pos.x, e.pos.y),
+                angle: e.pos.angleTo(player.pos),
+                rotation: rnd()
+            });
+            e.firingCooldown = G.ENEMY_FIRE_RATE;
+            play("select");
+        }
+
+        color("black");
+        // Interaction from enemies to fBullets
+        // Shorthand to check for collision against another specific type
+        // Also draw the sprits
+        const isCollidingWithFBullets = char("e", e.pos).isColliding.rect.yellow;
+        const isCollidingWithPlayer = char("e", e.pos).isColliding.char.a;
+        if (isCollidingWithPlayer) {
+            if(player.hasPowerUp > 0) {
+                return 
+            }
+            else {
+            end();
+            play("powerUp");
+            }
+        }
+        
+        if (isCollidingWithFBullets) {
+            color("yellow");
+            particle(e.pos);
+            play("explosion");
+            addScore(10 * waveCount, e.pos);
+        }
+        
+        // Also another condition to remove the object
+        return (isCollidingWithFBullets || e.pos.y > G.HEIGHT);
+    }); 
+
     remove(fBullets, (fb) => {
         // Interaction from fBullets to enemies, after enemies have been drawn
         color("yellow");
@@ -423,4 +510,29 @@ function update() {
         // If eBullet is not onscreen, remove it
         return (!eb.pos.isInRect(0, 0, G.WIDTH, G.HEIGHT));
     });
+    remove(eBullets1, (eb) => {
+        // Old-fashioned trigonometry to find out the velocity on each axis
+        eb.pos.x += G.EBULLET_SPEED * Math.cos(eb.angle);
+        eb.pos.y += G.EBULLET_SPEED * Math.sin(eb.angle);
+        // The bullet also rotates around itself
+        eb.rotation += G.EBULLET_ROTATION_SPD;
+
+        color("red");
+        const isCollidingWithPlayer
+            = char("f", eb.pos, {rotation: eb.rotation}).isColliding.char.a;
+
+        if (isCollidingWithPlayer) {
+            // End the game
+            end();
+            play("powerUp");
+        }
+
+        const isCollidingWithFBullets
+            = char("f", eb.pos, {rotation: eb.rotation}).isColliding.rect.yellow;
+        if (isCollidingWithFBullets) addScore(1, eb.pos);
+        
+        // If eBullet is not onscreen, remove it
+        return (!eb.pos.isInRect(0, 0, G.WIDTH, G.HEIGHT));
+    });
+
 }
