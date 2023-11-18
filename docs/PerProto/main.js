@@ -10,12 +10,12 @@ Gain powers.
 // The array of custom sprites
 characters = [
 `
-  ll
-  ll
-ccllgg
-ccllgg
-ccllgg
-cc  gg
+ l
+ l
+clc
+clc
+clc
+c c
 `,`
 rr  rr
 rrrrrr
@@ -47,6 +47,20 @@ gggggg
 `,`
 gg
 gg
+`,`
+pp  pp
+ppyypp
+pppppp
+pppppp
+  pp
+  pp
+`,`
+yyyyyy
+yyyyyy
+yyyyyy
+yyyyyy
+yyyyyy
+yyyyyy
 `
 ];
 
@@ -59,7 +73,6 @@ const G = {
 	STAR_SPEED_MAX: 1.0,
     
     PLAYER_FIRE_RATE: 20,
-    //PLAYER_GUN_OFFSET: 3,
 
     FBULLET_SPEED: 2.5,
 
@@ -69,6 +82,7 @@ const G = {
     ENEMY_MIN_BASE_SPEED: 1.0,
     ENEMY_MAX_BASE_SPEED: 2.0,
     ENEMY_FIRE_RATE: 45,
+    
 
     EBULLET_SPEED: 2.0,
     EBULLET_SPEED1: 1,
@@ -170,11 +184,31 @@ let enemies;
 let enemies1;
 
 /**
+ * @typedef {{
+* pos: Vector,
+* firingCooldown: number
+* }} Enemy2
+*/
+
+/**
+* @type { Enemy [] }
+*/
+let enemies2;
+
+/**
 * @typedef {{
 * pos: Vector,
 * angle: number,
 * rotation: number
 * }} EBullet1
+*/
+
+/**
+* @typedef {{
+* pos: Vector,
+* angle: number,
+* rotation: number
+* }} EBullet2
 */
 
 /**
@@ -186,6 +220,11 @@ let eBullets;
  * @type { EBullet1 [] }
  */
 let eBullets1;
+
+/**
+ * @type { EBullet1 [] }
+ */
+let eBullets2;
 
 /**
  * @type { number }
@@ -241,13 +280,15 @@ function update() {
         fPowerUp = [];
         enemies = [];
         enemies1 = [];
+        enemies2 = [];
         eBullets = [];
         eBullets1 = [];
+        eBullets2 = [];
         waveCount = 0;
 	}
 
-    // Spawning enemies
-    if (enemies.length === 0 && waveCount > 5) {
+    // Spawning middle tier enemies
+    if (enemies.length === 0 && waveCount >= 5) {
         currentEnemySpeed =
             rnd(G.ENEMY_MIN_BASE_SPEED, G.ENEMY_MAX_BASE_SPEED) * difficulty;
         for (let i = 0; i < 5; i++) {
@@ -258,11 +299,11 @@ function update() {
                 firingCooldown: G.ENEMY_FIRE_RATE 
             });
         }
-        //waveCount++; // Increase the tracking variable by one
+        waveCount++; // Increase the tracking variable by one
     }
 
-    // Spawning enemies
-    if (enemies1.length === 0) {
+    // Spawning starter enemies
+    if (enemies1.length === 0 && waveCount < 5) {
         currentEnemySpeed =
             rnd(G.ENEMY_MIN_BASE_SPEED, G.ENEMY_MAX_BASE_SPEED) * difficulty;
         for (let i = 0; i < 5; i++) {
@@ -276,6 +317,20 @@ function update() {
         waveCount++; // Increase the tracking variable by one
     }
 
+    // Spawning high tier enemies
+    if (enemies2.length === 0 && waveCount > 5) {
+        currentEnemySpeed =
+            rnd(G.ENEMY_MIN_BASE_SPEED, G.ENEMY_MAX_BASE_SPEED) * difficulty;
+        for (let i = 0; i < 5; i++) {
+            const posX = rnd(0, G.WIDTH);
+            const posY = -rnd(i * G.HEIGHT * 0.1);
+            enemies2.push({
+                pos: vec(posX, posY),
+                firingCooldown: G.ENEMY_FIRE_RATE 
+            });
+        }
+    }
+
     // Spawning powerups
     if (fPowerUp.length === 0) {
         currentFPowerupSpeed =
@@ -287,7 +342,6 @@ function update() {
                 pos: vec(posX, posY),
             });
         }
-        //waveCount++; // Increase the tracking variable by one
     }
 
     // Update for Star
@@ -311,23 +365,43 @@ function update() {
     
     // Time to fire the next shot
     if (player.firingCooldown <= 0) {
-        // Get the side from which the bullet is fired
-        /*const offset = (player.isFiringLeft)
-            ? -G.PLAYER_GUN_OFFSET
-            : G.PLAYER_GUN_OFFSET;
-            */
+        // Create the bullet
+        fBullets.push({
+            pos: vec(player.pos.x, player.pos.y)
+        });
+        // Switch the side of the firing gun by flipping the boolean value
+        //player.isFiringLeft = !player.isFiringLeft;
+        if (player.firingCooldown <= 0 && player.hasPowerUp >= 0) {  
+            fBullets.push({
+                pos: vec(player.pos.x, player.pos.y)
+            });
+        } 
+
+        color("yellow");
+        // Generate particles
+        particle(
+            player.pos.x, // x coordinate
+            player.pos.y, // y coordinate
+            4, // The number of particles
+            1, // The speed of the particles
+            -PI/2, // The emitting angle
+            PI/4  // The emitting width
+        );
+        // Reset the firing cooldown
+        player.firingCooldown = G.PLAYER_FIRE_RATE;
+    }  
+    
+    // Time to fire the next shot
+    if (player.firingCooldown <= 0 && player.hasPowerUp >= 0) {
         // Create the bullet
         fBullets.push({
             pos: vec(player.pos.x /*+ offset*/, player.pos.y)
         });
+        // Reset the firing cooldown
+        player.firingCooldown = G.PLAYER_FIRE_RATE;
         // Switch the side of the firing gun by flipping the boolean value
         //player.isFiringLeft = !player.isFiringLeft;
-        if (player.firingCooldown <= 0 && player.hasPowerUp > 0) {  // shoots to the left
-            fBullets.push({
-                pos: vec(player.pos.x /*+ 5 /*+ offset*/, player.pos.y)
-            });
-        }
-
+    
         color("yellow");
         // Generate particles
         particle(
@@ -338,39 +412,8 @@ function update() {
             -PI/2, // The emitting angle
             PI/4  // The emitting width
         );
-        // Reset the firing cooldown
-        player.firingCooldown = G.PLAYER_FIRE_RATE;
-    }
-    
-        // Time to fire the next shot
-        if (player.firingCooldown <= 0 && player.hasPowerUp > 0) {
-            // Get the side from which the bullet is fired
-            /*const offset = (player.isFiringLeft)
-                ? -G.PLAYER_GUN_OFFSET
-                : G.PLAYER_GUN_OFFSET;
-                */
-            // Create the bullet
-            fBullets.push({
-                pos: vec(player.pos.x /*+ offset*/, player.pos.y)
-            });
-            // Reset the firing cooldown
-            player.firingCooldown = G.PLAYER_FIRE_RATE;
-            // Switch the side of the firing gun by flipping the boolean value
-            //player.isFiringLeft = !player.isFiringLeft;
-    
-            color("yellow");
-            // Generate particles
-            particle(
-                player.pos.x /*+ offset*/, // x coordinate
-                player.pos.y, // y coordinate
-                4, // The number of particles
-                1, // The speed of the particles
-                -PI/2, // The emitting angle
-                PI/4  // The emitting width
-            );
-        } 
-    
-    
+    } 
+        
     color ("black");
     char("a", player.pos);
     
@@ -382,12 +425,14 @@ function update() {
 
         // Drawing fBullets for the first time, allowing interaction from enemies
         color("yellow");
-        if(player.hasPowerUp > 0) {
+        if(player.hasPowerUp >= 0) {
             box(fb.pos, player.hasPowerUp);
         }
         //box(fb.pos, 2);
     });
 
+
+    //powerups logic
     remove(fPowerUp, (e) => {
         e.pos.y += currentFPowerupSpeed;
         color("black");
@@ -399,6 +444,7 @@ function update() {
         return (isCollidingWithPlayer || e.pos.y > G.HEIGHT);
     });
 
+    //mid tier enemies logic
     remove(enemies, (e) => {
         e.pos.y += currentEnemySpeed;
         e.firingCooldown--;
@@ -419,7 +465,7 @@ function update() {
         const isCollidingWithFBullets = char("b", e.pos).isColliding.rect.yellow;
         const isCollidingWithPlayer = char("b", e.pos).isColliding.char.a;
         if (isCollidingWithPlayer) {
-            if(player.hasPowerUp > 0) {
+            if(player.hasPowerUp >= 0) {
                 return 
             }
             else {
@@ -432,13 +478,14 @@ function update() {
             color("yellow");
             particle(e.pos);
             play("explosion");
-            addScore(10 * waveCount, e.pos);
+            addScore(20 * waveCount, e.pos);
         }
         
         // Also another condition to remove the object
         return (isCollidingWithFBullets || e.pos.y > G.HEIGHT);
     });
 
+    //beginning enemies logic
     remove(enemies1, (e) => {
         e.pos.y += currentEnemySpeed;
         e.firingCooldown--;
@@ -459,7 +506,7 @@ function update() {
         const isCollidingWithFBullets = char("e", e.pos).isColliding.rect.yellow;
         const isCollidingWithPlayer = char("e", e.pos).isColliding.char.a;
         if (isCollidingWithPlayer) {
-            if(player.hasPowerUp > 0) {
+            if(player.hasPowerUp >= 0) {
                 return 
             }
             else {
@@ -479,6 +526,48 @@ function update() {
         return (isCollidingWithFBullets || e.pos.y > G.HEIGHT);
     }); 
 
+    //high tier enemies logic
+    remove(enemies2, (e) => {
+        e.pos.y += currentEnemySpeed;
+        e.firingCooldown--;
+        if (e.firingCooldown <= 0) {
+            eBullets2.push({
+                pos: vec(e.pos.x, e.pos.y),
+                angle: e.pos.angleTo(player.pos),
+                rotation: rnd()
+            });
+            e.firingCooldown = G.ENEMY_FIRE_RATE;
+            play("select");
+        }
+
+        color("black");
+        // Interaction from enemies to fBullets
+        // Shorthand to check for collision against another specific type
+        // Also draw the sprits
+        const isCollidingWithFBullets = char("g", e.pos).isColliding.rect.yellow;
+        const isCollidingWithPlayer = char("g", e.pos).isColliding.char.a;
+        if (isCollidingWithPlayer) {
+            if(player.hasPowerUp >= 0) {
+                return 
+            }
+            else {
+            end();
+            play("powerUp");
+            }
+        }
+        
+        if (isCollidingWithFBullets) {
+            color("yellow");
+            particle(e.pos);
+            play("explosion");
+            addScore(30 * waveCount, e.pos);
+        }
+        
+        // Also another condition to remove the object
+        return (isCollidingWithFBullets || e.pos.y > G.HEIGHT);
+    }); 
+
+    //friendly bullets logic
     remove(fBullets, (fb) => {
         // Interaction from fBullets to enemies, after enemies have been drawn
         color("yellow");
@@ -486,6 +575,7 @@ function update() {
         return (isCollidingWithEnemies || fb.pos.y < 0);
     });
 
+    //mid tier enemies bullets logic
     remove(eBullets, (eb) => {
         // Old-fashioned trigonometry to find out the velocity on each axis
         eb.pos.x += G.EBULLET_SPEED * Math.cos(eb.angle);
@@ -505,15 +595,17 @@ function update() {
 
         const isCollidingWithFBullets
             = char("c", eb.pos, {rotation: eb.rotation}).isColliding.rect.yellow;
-        if (isCollidingWithFBullets) addScore(1, eb.pos);
+        if (isCollidingWithFBullets) addScore(5, eb.pos);
         
         // If eBullet is not onscreen, remove it
-        return (!eb.pos.isInRect(0, 0, G.WIDTH, G.HEIGHT));
+        return (!eb.pos.isInRect(0, 0, G.WIDTH, G.HEIGHT) || isCollidingWithFBullets);
     });
+
+    //beginning enemies bullets logic
     remove(eBullets1, (eb) => {
         // Old-fashioned trigonometry to find out the velocity on each axis
-        eb.pos.x += G.EBULLET_SPEED * Math.cos(eb.angle);
-        eb.pos.y += G.EBULLET_SPEED * Math.sin(eb.angle);
+        eb.pos.x += G.EBULLET_SPEED1 * Math.cos(eb.angle);
+        eb.pos.y += G.EBULLET_SPEED1 * Math.sin(eb.angle);
         // The bullet also rotates around itself
         eb.rotation += G.EBULLET_ROTATION_SPD;
 
@@ -532,7 +624,33 @@ function update() {
         if (isCollidingWithFBullets) addScore(1, eb.pos);
         
         // If eBullet is not onscreen, remove it
-        return (!eb.pos.isInRect(0, 0, G.WIDTH, G.HEIGHT));
+        return (!eb.pos.isInRect(0, 0, G.WIDTH, G.HEIGHT) || isCollidingWithFBullets);
+    });
+
+    //high tier enemies bullets logic
+    remove(eBullets2, (eb) => {
+        // Old-fashioned trigonometry to find out the velocity on each axis
+        eb.pos.x += G.EBULLET_SPEED1 * Math.cos(eb.angle);
+        eb.pos.y += G.EBULLET_SPEED1 * Math.sin(eb.angle);
+        // The bullet also rotates around itself
+        eb.rotation += G.EBULLET_ROTATION_SPD;
+
+        color("red");
+        const isCollidingWithPlayer
+            = char("h", eb.pos, {rotation: eb.rotation}).isColliding.char.a;
+
+        if (isCollidingWithPlayer) {
+            // End the game
+            end();
+            play("powerUp");
+        }
+
+        const isCollidingWithFBullets
+            = char("h", eb.pos, {rotation: eb.rotation}).isColliding.rect.yellow;
+        if (isCollidingWithFBullets) addScore(10, eb.pos);
+        
+        // If eBullet is not onscreen, remove it
+        return (!eb.pos.isInRect(0, 0, G.WIDTH, G.HEIGHT) || isCollidingWithFBullets);
     });
 
 }
