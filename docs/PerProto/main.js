@@ -513,7 +513,7 @@ function update() {
                 rotation: rnd()
             });
             e.firingCooldown = G.ENEMY_FIRE_RATE;
-            play("select");
+            play("laser");
         }
 
         color("black");
@@ -569,7 +569,7 @@ function update() {
             }
             else {
             end();
-            play("powerUp");
+            play("coin");
             }
         }
         
@@ -612,7 +612,11 @@ function update() {
 
         const isCollidingWithFBullets
             = char("c", eb.pos, {rotation: eb.rotation}).isColliding.rect.yellow;
-        if (isCollidingWithFBullets) addScore(5, eb.pos);
+        if (isCollidingWithFBullets) {
+            addScore(5, eb.pos);
+            color("red");
+            particle(eb.pos);
+        }
         
         // If eBullet is not onscreen, remove it
         return (!eb.pos.isInRect(0, 0, G.WIDTH, G.HEIGHT) || isCollidingWithFBullets);
@@ -638,8 +642,11 @@ function update() {
 
         const isCollidingWithFBullets
             = char("f", eb.pos, {rotation: eb.rotation}).isColliding.rect.yellow;
-        if (isCollidingWithFBullets) addScore(1, eb.pos);
-        
+        if (isCollidingWithFBullets) {
+            addScore(1, eb.pos);
+            color("red");
+            particle(eb.pos);
+        }
         // If eBullet is not onscreen, remove it
         return (!eb.pos.isInRect(0, 0, G.WIDTH, G.HEIGHT) || isCollidingWithFBullets);
     });
@@ -664,7 +671,11 @@ function update() {
 
         const isCollidingWithFBullets
             = char("h", eb.pos, {rotation: eb.rotation}).isColliding.rect.yellow;
-        if (isCollidingWithFBullets) addScore(10, eb.pos);
+        if (isCollidingWithFBullets) {
+            addScore(10, eb.pos);
+            color("red");
+            particle(eb.pos);
+        }
         
         // If eBullet is not onscreen, remove it
         return (!eb.pos.isInRect(0, 0, G.WIDTH, G.HEIGHT) || isCollidingWithFBullets);
