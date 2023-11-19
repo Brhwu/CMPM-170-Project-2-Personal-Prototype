@@ -5,6 +5,7 @@ title = "MONARCHS ODYSSEY";
 description = `
 Destroy enemies.
 Gain powers.
+Get score.
 `;
 
 // The array of custom sprites
