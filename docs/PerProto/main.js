@@ -114,7 +114,7 @@ options = {
     seed: 1,
     isPlayingBgm: true,
     isReplayEnabled: true,
-    theme: "dark"
+    theme: "shapeDark"
 };
 
 // JSDoc comments for typing
@@ -368,7 +368,7 @@ function update() {
         if (s.pos.y > G.HEIGHT) s.pos.y = 0;
 
         // Choose a color to draw
-        color("light_black");
+        color("light_blue");
         // Draw the star as a square of size 1
         box(s.pos, 1);
     });
