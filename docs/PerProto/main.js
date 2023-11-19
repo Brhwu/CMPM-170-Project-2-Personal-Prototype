@@ -9,52 +9,67 @@ Gain powers.
 
 // The array of custom sprites
 characters = [
-`
+// player model "a"
+` 
  l
  l
 clc
 clc
 clc
 c c
-`,`
-rr  rr
-rrrrrr
-rrpprr
-rrrrrr
-  rr
-  rr
-`,`
+`,
+//mid tier enemy "b"
+`
+PPPPPP
+rPPPPr
+PPPPPP
+lPPPPl
+llllll
+PPPPPP
+`,
+//mid tier enemy bullet "c"
+`
 y  y
 yyyyyy
  y  y
 yyyyyy
  y  y
-`,`
-  ll
+`,
+//powerup "d"
+`
+  bb
+ bbbb
+bbbbbb
+bbbbbb
  llll
-llllll
-llllll
- llll
   ll
-`,`
-gg  gg
-gg  gg
+`,
+//beginning enemies "e"
+`
+RR  RR
+RR  RR
+RRRRRR
+RRRRRR
+RRRRRR
+  RR
+  RR
+`,
+//beginning enemies bullet "f"
+`
+pp
+pp
+`,
+//high tier enemies "g"
+`
+g    g
+ gggg
+ lggl
 gggggg
-gggggg
-gggggg
-  gg
-  gg
-`,`
-gg
-gg
-`,`
-pp  pp
-ppyypp
-pppppp
-pppppp
-  pp
-  pp
-`,`
+gllllg
+ gggg
+`,
+//high tier enemeies bullet "h"
+`
 yyyyyy
 yyyyyy
 yyyyyy
@@ -187,6 +202,7 @@ let enemies1;
  * @typedef {{
 * pos: Vector,
 * firingCooldown: number
+* rotation: number
 * }} Enemy2
 */
 
